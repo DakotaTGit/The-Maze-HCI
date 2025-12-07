@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="html-conversion-with-scripts">
+  <head>
+    <meta charset="utf-8"/>
+    <title>The Maze — Mover</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <style>
+      <![CDATA[
+        :root{--bg:#f6f6f6;--panel:#e0e0e0;--accent:#0b78ff;--muted:#666}
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);margin:14px}
+        .card{background:var(--panel);border-radius:18px;padding:18px;box-shadow:0 1px 0 #aaa}
+        h1{margin:4px 0;text-align:center;font-size:20px}
+        .status{display:flex;justify-content:center;gap:28px;margin:10px 0;font-weight:600}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .left,.right{background:#dcdcdc;padding:12px;border-radius:6px;min-height:160px}
+
+        .big-symbol{width:88px;height:88px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;margin:6px auto;font-size:40px;box-shadow:0 1px 0 #999}
+        .previous{display:flex;justify-content:space-around;margin-top:12px}
+        .prev-circle{width:40px;height:40px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 0 #999}
+        .label{text-align:center;color:var(--muted);margin-top:8px}
+
+        .dpad{display:grid;grid-template-columns:56px 56px 56px;gap:6px;justify-content:center;align-items:center;height:100%}
+        .btn{width:56px;height:56px;border-radius:8px;background:white;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 1px 0 #999}
+        .btn:active{transform:translateY(1px)}
+
+        .small{font-size:14px;color:var(--muted)}
+        .footer{text-align:center;margin-top:8px}
+
+        .flash{animation:pop .18s ease}
+        @keyframes pop{0%{transform:scale(.9)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+      ]]>
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1 title="The Maze: Mover">The Maze: Mover</h1>
+      <div class="status">
+        <div class="meta" label="Timer">
+          Timer:
+          <span id="timer">00:00</span>
+        </div>
+        <div class="meta" label="Deaths">
+          Deaths:
+          <span id="deaths">0</span>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="left">
+          <div class="big-symbol" id="latest">—</div>
+          <div class="label">Most Recent</div>
+          <div class="previous" id="previous"/>
+          <div class="label">Previous</div>
+        </div>
+        <div class="right">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;">
+            <div class="dpad" id="dpad">
+              <div/>
+              <div class="btn" data-dir="up">▲</div>
+              <div/>
+              <div class="btn" data-dir="left">◀</div>
+              <div class="btn" data-dir="interact">●</div>
+              <div class="btn" data-dir="right">▶</div>
+              <div/>
+              <div class="btn" data-dir="down">▼</div>
+              <div/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer small">
+        <span id="comm"/>
+      </div>
+    </div>
+    <script>
+      <![CDATA[
+        /* CONFIG */
+        const COMM_METHOD = "broadcast";  
+        const WS_URL = "wss://your.server.example:1234";
+
+        /* DOM */
+        const latest = document.getElementById("latest");
+        const previous = document.getElementById("previous");
+        const timer = document.getElementById("timer");
+        const deathsSpan = document.getElementById("deaths");
+        const comm = document.getElementById("comm");
+
+        let prevSymbols = [];
+        let seconds = 0;
+        let deaths = 0;
+
+        /* COMMUNICATION SETUP */
+        let channel = null;
+        let ws = null;
+
+        if (COMM_METHOD === "broadcast") {
+          comm.textContent = "BroadcastChannel";
+          try {
+            channel = new BroadcastChannel("maze-channel");
+            channel.onmessage = (e) => handleIncoming(e.data);
+          } catch (e) {
+            comm.textContent = "BC Unavailable";
+          }
+        } else {
+          comm.textContent = "WebSocket";
+          ws = new WebSocket(WS_URL);
+          ws.onmessage = (e) => handleIncoming(JSON.parse(e.data));
+        }
+
+        /* SEND MESSAGE */
+        function send(msg){
+          if (COMM_METHOD === "broadcast" && channel) channel.postMessage(msg);
+          else if (COMM_METHOD === "ws" && ws?.readyState === 1) ws.send(JSON.stringify(msg));
+        }
+
+        /* PROCESS INCOMING */
+        function handleIncoming(data){
+          if (typeof data === "string") try { data = JSON.parse(data); } catch{}
+
+          if (!data) return;
+
+          if (data.type === "symbol") {
+            pushSymbol(data.symbol);
+            pulse(latest);
+          }
+
+          if (data.type === "state") {
+            if (typeof data.seconds === "number") { seconds = data.seconds; updateTimer(); }
+            if (typeof data.deaths === "number") { deaths = data.deaths; updateDeaths(); }
+          }
+
+          if (data.type === "clear") {
+            prevSymbols = [];
+            latest.textContent = "—";
+            renderPrev();
+          }
+        }
+
+        /* UPDATE UI */
+        function pushSymbol(sym){
+          latest.textContent = sym;
+          prevSymbols.unshift(sym);
+          prevSymbols.length = Math.min(prevSymbols.length, 4);
+          renderPrev();
+        }
+
+        function renderPrev(){
+          previous.innerHTML = "";
+          for (let i = 0; i < 4; i++) {
+            const div = document.createElement("div");
+            div.className = "prev-circle";
+            div.textContent = prevSymbols[i] || "";
+            previous.appendChild(div);
+          }
+        }
+
+        function updateTimer(){
+          const m = String(Math.floor(seconds/60)).padStart(2,"0");
+          const s = String(seconds%60).padStart(2,"0");
+          timer.textContent = `${m}:${s}`;
+        }
+
+        function updateDeaths(){
+          deathsSpan.textContent = deaths;
+        }
+
+        /* MOVEMENT INPUT */
+        document.getElementById("dpad").addEventListener("click", (e)=>{
+          const btn = e.target.closest(".btn");
+          if (btn) triggerMove(btn.dataset.dir);
+        });
+
+        window.addEventListener("keydown", (e)=>{
+          const k = e.key.toLowerCase();
+          if (k === "arrowup" || k === "w") triggerMove("up");
+          if (k === "arrowdown" || k === "s") triggerMove("down");
+          if (k === "arrowleft" || k === "a") triggerMove("left");
+          if (k === "arrowright" || k === "d") triggerMove("right");
+          if (k === " " || k === "enter") triggerMove("interact");
+        });
+
+        function triggerMove(dir){
+          const btn = document.querySelector(`.btn[data-dir="${dir}"]`);
+          if (btn) pulse(btn);
+          send({type:"move",dir,ts:Date.now()});
+        }
+
+        /* EXTERNAL API FOR UNITY */
+        window.mover = {
+          setTimer: (sec)=>{ seconds = +sec || 0; updateTimer(); },
+          setDeaths: (d)=>{ deaths = +d || 0; updateDeaths(); },
+          clearSymbols: ()=>{
+            prevSymbols = [];
+            latest.textContent = "—";
+            renderPrev();
+            send({type:"clear"});
+          }
+        };
+
+        /* INIT */
+        renderPrev();
+        updateDeaths();
+        updateTimer();
+      ]]>
+    </script>
+  </body>
+</document>

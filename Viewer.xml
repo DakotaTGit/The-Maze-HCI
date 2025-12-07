@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="html-conversion-with-scripts">
+  <head>
+    <meta charset="utf-8"/>
+    <title>The Maze — Viewer</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <style>
+      <![CDATA[
+        :root{--bg:#f7f7f7;--panel:#e6e6e6;--accent:#0b78ff;--muted:#555}
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);margin:18px}
+        .wrap{background:var(--panel);padding:18px;border-radius:8px}
+        h1{text-align:center;margin:2px 0 8px}
+        .maze{background:#dcdcdc;border-radius:4px;padding:12px;display:flex;justify-content:center;align-items:center;margin-bottom:12px}
+        canvas{background:#e9e9e9;border:1px solid #bdbdbd;border-radius:2px}
+        .controls{display:flex;gap:12px;margin-top:12px}
+        .symbols{flex:1;background:#dcdcdc;padding:12px;border-radius:6px}
+        .state{width:260px;background:#dcdcdc;padding:12px;border-radius:6px;display:flex;flex-direction:column;gap:12px;justify-content:center}
+        .symbol-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .sym-btn{width:64px;height:64px;border-radius:50%;background:#dff0ff;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;box-shadow:0 1px 0 #999}
+        .meta{font-weight:600}
+        .small{font-size:13px;color:var(--muted)}
+        .btn{padding:8px 10px;border-radius:6px;background:white;border:1px solid #bdbdbd;cursor:pointer}
+        .row{display:flex;gap:8px;align-items:center}
+        .footer{margin-top:8px;font-size:13px;color:var(--muted)}
+      ]]>
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 title="The Maze: Viewer">The Maze: Viewer</h1>
+
+      <div class="maze">
+        <canvas id="mazeCanvas" width="780" height="220"/>
+      </div>
+
+      <div class="controls">
+        <div class="symbols">
+          <div class="meta">Symbols (random 6 per game)</div>
+          <div style="height:12px"/>
+          <div class="symbol-grid" id="symbolGrid"/>
+          <div style="height:12px"/>
+          <div class="row">
+            <button class="btn" id="reshuffle">New Set</button>
+            <button class="btn" id="clearSymbols">Clear Sent</button>
+          </div>
+        </div>
+
+        <div class="state">
+          <div label="Timer"><span class="meta">Timer:</span> <span id="timer">00:00</span></div>
+          <div label="Deaths"><span class="meta">Deaths:</span> <span id="deaths">0</span></div>
+          <div style="margin-top:8px" class="small">Comm: <span id="commMode">BroadcastChannel</span></div>
+        </div>
+      </div>
+
+      <div class="footer">Tip: Click a symbol to send it to the Mover.</div>
+    </div>
+
+    <script>
+      <![CDATA[
+        const ALL_SYMBOLS=['▲','▶','▼','◀','⏳','✖','⭕','★','♣','♠','♥','♦','☼','☾','✡','✶','❖','✪','✺','◆'];
+        const grid=document.getElementById('symbolGrid'), timerEl=document.getElementById('timer'), deathsEl=document.getElementById('deaths'), commEl=document.getElementById('commMode');
+        const canvas=document.getElementById('mazeCanvas'), ctx=canvas.getContext('2d');
+
+        let chosenSymbols=[], seconds=0, deaths=0;
+        let channel=new BroadcastChannel('maze-channel');
+        channel.onmessage=ev=>handleIncoming(ev.data);
+
+        function send(msg){ channel.postMessage(msg); }
+        function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
+        function pick6(){ return shuffle(ALL_SYMBOLS).slice(0,6); }
+
+        function renderSymbols(){
+          grid.innerHTML='';
+          chosenSymbols.forEach(sym=>{
+            const b=document.createElement('button');
+            b.className='sym-btn';
+            b.textContent=sym;
+            b.onclick=()=>{ send({type:'symbol',symbol:sym,ts:Date.now()}); b.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:160}); };
+            grid.appendChild(b);
+          });
+        }
+
+        document.getElementById('reshuffle').onclick=()=>{ chosenSymbols=pick6(); renderSymbols(); send({type:'newset',symbols:chosenSymbols}); };
+        document.getElementById('clearSymbols').onclick=()=>send({type:'clear'});
+
+        function handleIncoming(data){
+          if(typeof data==='string') try{ data=JSON.parse(data); }catch(e){}
+          if(!data) return;
+          if(data.type==='move') flashMoveDot();
+          else if(data.type==='death'){ deaths=data.deaths||0; deathsEl.textContent=deaths; }
+          else if(data.type==='symbol') animateSentSymbol(data.symbol);
+          else if(data.type==='newset'){ chosenSymbols=data.symbols||[]; renderSymbols(); }
+        }
+
+        function animateSentSymbol(sym){
+          ctx.save();
+          ctx.globalAlpha=0.85;
+          ctx.fillStyle='#fff'; ctx.fillRect(canvas.width-86,6,80,36);
+          ctx.fillStyle='#222'; ctx.font='24px system-ui'; ctx.fillText(sym, canvas.width-64,32);
+          ctx.restore();
+          setTimeout(drawMaze,360);
+        }
+
+        function flashMoveDot(){
+          const x=Math.random()*(canvas.width-40)+20;
+          const y=Math.random()*(canvas.height-40)+20;
+          ctx.fillStyle='#ff5050'; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fill();
+          setTimeout(drawMaze,350);
+        }
+
+        function updateTimerDisplay(){ timerEl.textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`; }
+
+        function drawMaze(){
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          ctx.fillStyle='#f0f0f0'; ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.lineWidth=3; ctx.strokeStyle='#666'; ctx.beginPath();
+          const cp=[]; for(let i=0;i<7;i++){ cp.push({x:30+i*(canvas.width-60)/6+(Math.random()-0.5)*40, y:30+Math.random()*(canvas.height-60)}); }
+          ctx.moveTo(cp[0].x,cp[0].y);
+          for(let i=1;i<cp.length;i++){ const p=cp[i-1],c=cp[i]; ctx.quadraticCurveTo(p.x,p.y,(p.x+c.x)/2,(p.y+c.y)/2); }
+          ctx.stroke();
+          ctx.fillStyle='#39a839'; ctx.beginPath(); ctx.arc(cp[0].x,cp[0].y,9,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#d42f2f'; ctx.beginPath(); ctx.arc(cp[cp.length-1].x,cp[cp.length-1].y,9,0,Math.PI*2); ctx.fill();
+        }
+
+        function init(){ chosenSymbols=pick6(); renderSymbols(); deathsEl.textContent=deaths; updateTimerDisplay(); }
+        init();
+
+        window.viewer={
+          setTimer: secs=>{ seconds=Number(secs)||0; updateTimerDisplay(); send({type:'state',seconds}); },
+          setDeaths: d=>{ deaths=Number(d)||0; deathsEl.textContent=deaths; send({type:'state',deaths}); },
+          getCurrentSymbols: ()=>chosenSymbols.slice()
+        };
+      ]]>
+    </script>
+  </body>
+</document>
