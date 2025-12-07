@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns="UnityEngine.UIElements" xmlns:uie="UnityEngine.Experimental.UIElements">
+  <Style>
+    <![CDATA[
+      .wrap { padding: 18px; background-color: #e6e6e6; border-radius: 8px; }
+      .header { unity-text-align: middle-center; font-size: 20px; margin-bottom: 8px; }
+      .maze { background-color: #dcdcdc; padding: 12px; border-radius: 4px; height: 220px; }
+      .controls { flex-direction: row; gap: 12px; margin-top: 12px; }
+      .symbols { flex: 1; background-color: #dcdcdc; padding: 12px; border-radius: 6px; }
+      .state { width: 260px; background-color: #dcdcdc; padding: 12px; border-radius: 6px; flex-direction: column; gap: 12px; }
+      .symbol-grid { flex-direction: row; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+      .sym-btn { width: 64px; height: 64px; border-radius: 50%; background-color: #dff0ff; font-size: 30px; text-align: center; }
+      .btn { padding: 8px; border-radius: 6px; background-color: white; border: 1px solid #bdbdbd; }
+      .footer { margin-top: 8px; font-size: 13px; color: #555555; }
+    ]]>
+  </Style>
+
+  <VisualElement class="wrap">
+    <Label text="The Maze: Viewer" class="header" />
+
+    <Box class="maze" name="mazeCanvasPlaceholder">
+      <!-- In Unity, you can use a PanelRenderer or custom drawing here instead of canvas -->
+    </Box>
+
+    <VisualElement class="controls">
+      <VisualElement class="symbols">
+        <Label text="Symbols (random 6 per game)" />
+        <VisualElement class="symbol-grid" name="symbolGrid">
+          <!-- Buttons will be instantiated here via C# script -->
+        </VisualElement>
+        <VisualElement class="row" style="margin-top: 10px;">
+          <Button text="New Set" name="reshuffle" class="btn" />
+          <Button text="Clear Sent" name="clearSymbols" class="btn" />
+        </VisualElement>
+      </VisualElement>
+
+      <VisualElement class="state">
+        <Label text="Timer: "><Label name="timer" text="00:00"/></Label>
+        <Label text="Deaths: "><Label name="deaths" text="0"/></Label>
+        <Label text="Comm: BroadcastChannel" class="small"/>
+      </VisualElement>
+    </VisualElement>
+
+    <Label text="Tip: Click a symbol to send it to the Mover." class="footer"/>
+  </VisualElement>
+</UXML>
