@@ -1,61 +1,57 @@
 <UXML xmlns="UnityEngine.UIElements" xmlns:uie="UnityEngine.Experimental.UIElements">
-  
-  <!-- Defaults for common elements -->
+
+  <!-- Default styling pulled from viewer -->
   <Defaults>
-    <!-- Panel/Card default -->
-    <Panel padding="18" border-radius="18" background-color="#e0e0e0" boxShadow="0 1px 0 #aaa"/>
-    
-    <!-- Button default -->
-    <Button width="56" height="56" border-radius="8" background-color="white" font-size="22"
-            textColor="rgb(0,0,0)" boxShadow="0 1px 0 #999" activeTransform="translateY(1)"/>
-    
-    <!-- Text default -->
-    <Text font-family="system-ui,Segoe UI,Roboto,Arial" color="#666" font-size="14"/>
+    <Panel border-radius="8" background-color="#e6e6e6" padding="18"/>
+    <Button width="64" height="64" border-radius="50" background-color="#dff0ff"
+            font-size="30" boxShadow="0 1px 0 #999" activeTransform="scale(0.98)"/>
+    <Button border-radius="6" padding="8 10" background-color="white" border-color="#bdbdbd"/>
+    <Text font-size="13" color="#555" font-weight="400"/>
+    <Label font-weight="600"/>
   </Defaults>
 
-  <!-- Main UI -->
-  <VisualElement class="card">
 
-    <!-- Status (Timer / Deaths) -->
-    <VisualElement class="status">
-      <Text name="timerLabel" text="Timer: "/>
-      <Text name="timer" text="00:00"/>
-      <Text name="deathsLabel" text="Deaths: "/>
-      <Text name="deaths" text="0"/>
-    </VisualElement>
+  <Panel color="#e6e6e6" padding="18">
+    <VerticalLayout spacing="8">
 
-    <!-- Grid layout -->
-    <VisualElement class="grid">
-
-      <!-- Left Panel -->
-      <Panel class="left">
-        <Text class="big-symbol" name="latest" text="—"/>
-        <Text class="label" text="Most Recent"/>
-        <VisualElement class="previous" name="previous"/>
-        <Text class="label" text="Previous"/>
+      <Panel color="grey" height="40">
+        <Text text="The Maze: Mover"/>
       </Panel>
 
-      <!-- Right Panel -->
-      <Panel class="right">
-        <VisualElement style="display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;">
-          <VisualElement class="dpad" name="dpad">
-            <Button text="" data-dir="up"/>
-            <Button text="▲" data-dir="up"/>
-            <Button text="" />
-            <Button text="◀" data-dir="left"/>
-            <Button text="●" data-dir="interact"/>
-            <Button text="▶" data-dir="right"/>
-            <Button text=""/>
-            <Button text="▼" data-dir="down"/>
-            <Button text=""/>
-          </VisualElement>
-        </VisualElement>
-      </Panel>
+      <HorizontalLayout spacing="12">
 
-    </VisualElement>
+        <!-- LEFT (latest + previous symbols) -->
+        <Panel flex="1" color="#dcdcdc" padding="12">
+          <VerticalLayout spacing="6">
+            <Text text="Latest"/>
+            <Text name="latest" font-size="48" text="—"/>
 
-    <!-- Footer -->
-    <Text class="footer small" name="comm"/>
+            <Text text="Previous"/>
+            <Panel name="previous" height="120"/>
+          </VerticalLayout>
+        </Panel>
 
-  </VisualElement>
+        <!-- RIGHT (controls + stats) -->
+        <Panel width="260" color="#dcdcdc" padding="12">
+          <VerticalLayout spacing="6">
+
+            <Text text="Controls"/>
+            <Panel name="dpad"/>
+
+            <Text text="Timer: " name="timerLabel"/>
+            <Text text="00:00" name="timer"/>
+
+            <Text text="Deaths:" name="deathsLabel"/>
+            <Text text="0" name="deaths"/>
+
+          </VerticalLayout>
+        </Panel>
+
+      </HorizontalLayout>
+
+      <Text name="comm" text="Comm: BroadcastChannel"/>
+
+    </VerticalLayout>
+  </Panel>
+
 </UXML>
