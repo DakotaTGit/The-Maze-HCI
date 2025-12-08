@@ -1,56 +1,61 @@
-<Defaults>
-    <Button 
-        width="56" height="56" border-radius="8" 
-        background-color="white" font-size="22" 
-        textColor="rgb(0,0,0)" 
-        boxShadow="0 1px 0 #999" 
-        activeTransform="translateY(1)"
-    />
+<UXML xmlns="UnityEngine.UIElements" xmlns:uie="UnityEngine.Experimental.UIElements">
+  
+  <!-- Defaults for common elements -->
+  <Defaults>
+    <!-- Panel/Card default -->
+    <Panel padding="18" border-radius="18" background-color="#e0e0e0" boxShadow="0 1px 0 #aaa"/>
+    
+    <!-- Button default -->
+    <Button width="56" height="56" border-radius="8" background-color="white" font-size="22"
+            textColor="rgb(0,0,0)" boxShadow="0 1px 0 #999" activeTransform="translateY(1)"/>
+    
+    <!-- Text default -->
+    <Text font-family="system-ui,Segoe UI,Roboto,Arial" color="#666" font-size="14"/>
+  </Defaults>
 
-    <Panel 
-        padding="18" border-radius="18" 
-        background-color="#e0e0e0" 
-        boxShadow="0 1px 0 #aaa"
-    />
+  <!-- Main UI -->
+  <VisualElement class="card">
 
-    <Text 
-        font-family="system-ui,Segoe UI,Roboto,Arial" 
-        color="#666" font-size="14"
-    />
-</Defaults>
+    <!-- Status (Timer / Deaths) -->
+    <VisualElement class="status">
+      <Text name="timerLabel" text="Timer: "/>
+      <Text name="timer" text="00:00"/>
+      <Text name="deathsLabel" text="Deaths: "/>
+      <Text name="deaths" text="0"/>
+    </VisualElement>
 
-<Panel color="#e6e6e6" padding="18">
-    <VerticalLayout spacing="8">
+    <!-- Grid layout -->
+    <VisualElement class="grid">
 
-        <Panel color="grey" height="40">
-            <Text text="The Maze: Viewer"/>
-        </Panel>
+      <!-- Left Panel -->
+      <Panel class="left">
+        <Text class="big-symbol" name="latest" text="—"/>
+        <Text class="label" text="Most Recent"/>
+        <VisualElement class="previous" name="previous"/>
+        <Text class="label" text="Previous"/>
+      </Panel>
 
-        <Panel color="#dcdcdc" height="220">
-            <!-- Maze -->
-        </Panel>
+      <!-- Right Panel -->
+      <Panel class="right">
+        <VisualElement style="display:flex; flex-direction:column; align-items:center; gap:6px; height:100%;">
+          <VisualElement class="dpad" name="dpad">
+            <Button text="" data-dir="up"/>
+            <Button text="▲" data-dir="up"/>
+            <Button text="" />
+            <Button text="◀" data-dir="left"/>
+            <Button text="●" data-dir="interact"/>
+            <Button text="▶" data-dir="right"/>
+            <Button text=""/>
+            <Button text="▼" data-dir="down"/>
+            <Button text=""/>
+          </VisualElement>
+        </VisualElement>
+      </Panel>
 
-        <HorizontalLayout spacing="12">
-            <Panel flex="1" color="#dcdcdc" padding="12">
-                <VerticalLayout spacing="6">
-                    <Text text="Symbols (random 6 per game)"/>
-                    <Panel name="symbolGrid"/>
-                    <HorizontalLayout spacing="8">
-                        <Button name="reshuffle" text="New Set"/>
-                        <Button name="clearSymbols" text="Clear Sent"/>
-                    </HorizontalLayout>
-                </VerticalLayout>
-            </Panel>
+    </VisualElement>
 
-            <Panel width="260" color="#dcdcdc" padding="12">
-                <VerticalLayout spacing="6">
-                    <Text text="Timer: 00:00" name="timer"/>
-                    <Text text="Deaths: 0" name="deaths"/>
-                    <Text text="Comm: BroadcastChannel"/>
-                </VerticalLayout>
-            </Panel>
-        </HorizontalLayout>
+    <!-- Footer -->
+    <Text class="footer small" name="comm"/>
 
-        <Text text="Tip: Click a symbol to send it to the Mover."/>
-    </VerticalLayout>
-</Panel>
+  </VisualElement>
+</UXML>
