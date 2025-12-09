@@ -7,6 +7,8 @@ public class ViewerUI : MonoBehaviour
     public Button[] symbolButtons; // Assign buttons in Inspector
     public string[] symbolNames;   // Names of SVGs matching Resources/Symbols/
 
+    public MoverUI mover;
+
     private void Start()
     {
         if (symbolButtons.Length != symbolNames.Length)
@@ -26,7 +28,7 @@ public class ViewerUI : MonoBehaviour
     {
         if (SymbolManager.Instance != null)
         {
-            SymbolManager.Instance.SendSymbol(symbolName);
+            mover.RecieveSymbol(symbolName);
         }
     }
 }

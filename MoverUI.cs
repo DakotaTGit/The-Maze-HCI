@@ -9,9 +9,8 @@ public class MoverUI : MonoBehaviour
 
     private Queue<Sprite> lastSymbols = new Queue<Sprite>();
 
-    public void DisplaySymbol(string symbolName)
+    public void RecieveSymbol(string symbolName)
     {
-        // load the sprite
         Sprite symSprite = Resources.Load<Sprite>("Symbols/" + symbolName);
 
         if (!symSprite)
@@ -20,13 +19,19 @@ public class MoverUI : MonoBehaviour
             return;
         }
 
-        // latest
-        latestSymbol.sprite = symSprite;
-
-        // previous queue
         lastSymbols.Enqueue(symSprite);
         if (lastSymbols.Count > previousSymbols.Length) lastSymbols.Dequeue();
+    }
 
+    public void DisplaySymbol(string symbolName)
+    {
+        // load the sprite
+        // Sprite symSprite = Resources.Load<Sprite>("Symbols/" + symbolName);
+
+        // latest
+        latestSymbol.sprite = lastSymbols.Peek();
+
+        // previous queue
         int i = 0;
         foreach (var s in lastSymbols)
         {
