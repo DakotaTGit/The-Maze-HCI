@@ -9,7 +9,7 @@ public class MoverUI : MonoBehaviour
 
     private Queue<Sprite> lastSymbols = new Queue<Sprite>();
 
-    public void RecieveSymbol(string symbolName)
+    public void ReceiveSymbol(string symbolName)
     {
         Sprite symSprite = Resources.Load<Sprite>("Symbols/" + symbolName);
 
@@ -20,23 +20,29 @@ public class MoverUI : MonoBehaviour
         }
 
         lastSymbols.Enqueue(symSprite);
-        if (lastSymbols.Count > previousSymbols.Length) lastSymbols.Dequeue();
+
+        if (lastSymbols.Count > previousSymbols.Length + 1)
+        {
+            lastSymbols.Dequeue();
+        }
+
+        UpdateDisplay();
     }
 
-    public void DisplaySymbol(string symbolName)
+    private void UpdateDisplay()
     {
-        // load the sprite
-        // Sprite symSprite = Resources.Load<Sprite>("Symbols/" + symbolName);
+        Sprite[] arr = lastSymbols.ToArray();
 
-        // latest
-        latestSymbol.sprite = lastSymbols.Peek();
+        //newest 
+        latestSymbol.sprite = arr[arr.Length - 1];
 
-        // previous queue
-        int i = 0;
-        foreach (var s in lastSymbols)
+        //old ones 
+        int prevIndex = 0;
+
+        for (int i = arr.Length - 2; i >= 0 && prevIndex < previousSymbols.Length; i--)
         {
-            previousSymbols[i].sprite = s;
-            i++;
+            previousSymbols[prevIndex].sprite = arr[i];
+            prevIndex++;
         }
     }
 }
